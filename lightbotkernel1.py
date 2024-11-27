@@ -1,4 +1,4 @@
-# Kernel for the Lightbot Game
+# This is an editing for the final part of the lightbot kernel
 
 # Global variables for bot's state
 bot_position = [0, 9]  # Start at [0, 9]
