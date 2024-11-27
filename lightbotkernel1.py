@@ -1,59 +1,79 @@
-#This is the old version of the code
-# Initialize the terrain and bot state
-grid_size = 10  # 10x10 grid
-terrain = [[{'height': 0, 'light': 0} for _ in range(grid_size)] for _ in range(grid_size)]  # Store height and light state
-bot_position = [9, 0]  # Bot starts at the bottom-left corner
-bot_direction = 'E'  # Bot starts facing EAST
+# Kernel for the Lightbot Game
 
-# Function to print the current state
-def print_state():
-    print(f"Bot Position: {bot_position}, Facing: {bot_direction}")
-    for row in terrain:
-        print([f"H:{cell['height']} L:{cell['light']}" for cell in row])
+# Global variables for bot's state
+bot_position = [0, 9]  # Start at [0, 9]
+bot_direction = 'E'  # Facing East initially (N, E, S, W)
+grid_size = 10  # Grid size (10x10)
+
+# Example terrain: each cell is a dictionary with "light" status
+terrain = [
+    [{'light': 0} for _ in range(grid_size)]
+    for _ in range(grid_size)
+]
+
+# Function to toggle the light at the bot's current position
+def toggle_light():
+    global terrain, bot_position
+    x, y = bot_position
+    if terrain[y][x]['light'] == 0:
+        terrain[y][x]['light'] = 1
+        print(f"Toggled light ON at ({x}, {y}).")
+    else:
+        print(f"Light at ({x}, {y}) is already ON. Cannot toggle OFF.")
 
 # Function to turn the bot right (90 degrees)
 def turn_right():
     global bot_direction
     directions = ['N', 'E', 'S', 'W']
-    current_idx = directions.index(bot_direction)
-    bot_direction = directions[(current_idx + 1) % 4]
+    if bot_direction in directions:
+        current_idx = directions.index(bot_direction)
+        bot_direction = directions[(current_idx + 1) % 4]
+    else:
+        print(f"Error: Invalid bot direction '{bot_direction}'.")
 
 # Function to turn the bot left (90 degrees)
 def turn_left():
     global bot_direction
     directions = ['N', 'E', 'S', 'W']
-    current_idx = directions.index(bot_direction)
-    bot_direction = directions[(current_idx - 1) % 4]
+    if bot_direction in directions:
+        current_idx = directions.index(bot_direction)
+        bot_direction = directions[(current_idx - 1) % 4]
+    else:
+        print(f"Error: Invalid bot direction '{bot_direction}'.")
 
 # Function to check if the bot can move to a neighboring square
 def can_move(new_x, new_y, allow_jump=False):
-    current_height = terrain[bot_position[1]][bot_position[0]]['height']
+    global terrain, bot_position, grid_size
     if 0 <= new_x < grid_size and 0 <= new_y < grid_size:
-        next_height = terrain[new_y][new_x]['height']
-        # The bot can move if the height difference is 0 or it can jump if the height difference is exactly 1 and jump is allowed
-        if next_height == current_height or (allow_jump and next_height == current_height + 1):
-            return True
+        return True
+    else:
+        print(f"Invalid position: ({new_x}, {new_y}) is out of bounds.")
     return False
 
 # Function to move the bot forward in the direction it is facing
-def move_forward():
-    global bot_position
-    if bot_direction == 'N' and bot_position[1] > 0:
-        bot_position[1] -= 1  # Move up (within bounds)
-    elif bot_direction == 'E' and bot_position[0] < grid_size - 1:
-        bot_position[0] += 1  # Move right (within bounds)
-    elif bot_direction == 'S' and bot_position[1] < grid_size - 1:
-        bot_position[1] += 1  # Move down (within bounds)
-    elif bot_direction == 'W' and bot_position[0] > 0:
-        bot_position[0] -= 1  # Move left (within bounds)
+def move_forward(allow_jump=False):
+    global bot_position, bot_direction
+    new_x, new_y = bot_position[0], bot_position[1]
 
+    if bot_direction == 'N':
+        new_y -= 1
+    elif bot_direction == 'E':
+        new_x += 1
+    elif bot_direction == 'S':
+        new_y += 1
+    elif bot_direction == 'W':
+        new_x -= 1
+    else:
+        print(f"Error: Unknown direction '{bot_direction}'.")
+        return
 
-# Function to toggle the light at the bot's current position
-def toggle_light():
-    x, y = bot_position
-    terrain[y][x]['light'] = 1 - terrain[y][x]['light']  # Toggle between 0 (off) and 1 (lit)
+    if can_move(new_x, new_y, allow_jump):
+        bot_position[0], bot_position[1] = new_x, new_y
+        print(f"Moved to ({new_x}, {new_y}).")
+    else:
+        print(f"Cannot move to ({new_x}, {new_y}).")
 
-# Function to execute a series of instructions
+# Function to execute a sequence of instructions
 def execute_instructions(instructions):
     for instr in instructions:
         if instr == '^':
@@ -66,22 +86,24 @@ def execute_instructions(instructions):
             turn_left()
         elif instr == '@':
             toggle_light()
+        else:
+            print(f"Unknown instruction: '{instr}'")
         print_state()  # Print the state after each step
 
+# Function to print the current state of the bot and the terrain
+def print_state():
+    global bot_position, bot_direction, terrain
+    print(f"Bot Position: {bot_position}, Direction: {bot_direction}")
+    print("Lit squares:")
+    for row in terrain:
+        print([cell['light'] for cell in row])
 # Example: You can manually set the heights of squares here, just for simplicity ill do the following
 terrain[9][9]['height'] = 0
 terrain[9][8]['height'] = 0
 terrain[8][9]['height'] = 0
 
-# Execute the instructions I did for the last homework
-instructions = "^<^@^@>^>^@^<^@^@^<^@>^@^<^@^@<^@>^@<^@^@>^>^^@^@<^@^<^@^@>^<^@^@^<^@>^@<^@^^^^^^<^^^^^^"
-execute_instructions(instructions)
-
-# Function to print the final matrix of lit squares (1 for lit, 0 for unlit)
-def print_lit_squares():
-    print("Final lit-up squares (1 = lit, 0 = unlit):")
-    for row in terrain:
-        print([cell['light'] for cell in row])
-
-# Print the final state of the lit-up squares
-print_lit_squares()
+# Example: Execute the provided instruction sequence
+# Litting up the squares in the shape of number 3 as I did in my previous homeworks to check if the code is correct.
+if __name__ == "__main__":
+    instructions = "^<^@^@>^>^@^<^@^@^<^@>^@^<^@^@<^@>^@<^@^@>^>^^@^@<^@^<^@^@>^<^@^@^<^@>^@<^@^^^^^^<^^^^^^"
+    execute_instructions(instructions)
